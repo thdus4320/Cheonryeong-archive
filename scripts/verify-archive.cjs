@@ -14,7 +14,14 @@ const requiredSnippets = [
   "data-pin",
   "상단 고정",
   "대표 이미지 주소",
-  "대표 이미지 파일"
+  "대표 이미지 파일",
+  "id=\"imageViewerDialog\"",
+  "openImageViewer",
+  "closeImageViewer",
+  "data-view",
+  "gallery-image-button",
+  "viewerImage",
+  "이미지 크게 보기"
 ];
 
 for (const file of files) {

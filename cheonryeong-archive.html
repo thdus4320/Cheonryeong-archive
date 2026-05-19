@@ -467,6 +467,16 @@
       padding: 0;
     }
 
+    .gallery-image-button {
+      width: 100%;
+      padding: 0;
+      background: transparent;
+      display: block;
+      border-radius: 0;
+      box-shadow: none;
+      cursor: zoom-in;
+    }
+
     .gallery-card img {
       width: 100%;
       aspect-ratio: 4 / 3;
@@ -501,6 +511,62 @@
     dialog::backdrop {
       background: rgba(39,29,39,.38);
       backdrop-filter: blur(4px);
+    }
+
+    .viewer-dialog {
+      width: min(1080px, calc(100% - 28px));
+      background: #17141b;
+      color: white;
+    }
+
+    .viewer-dialog::backdrop {
+      background: rgba(18,14,20,.72);
+      backdrop-filter: blur(6px);
+    }
+
+    .viewer-body {
+      padding: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 300px;
+      max-height: min(84vh, 860px);
+      overflow: hidden;
+    }
+
+    .viewer-stage {
+      display: grid;
+      place-items: center;
+      min-height: 360px;
+      background: #0d0b10;
+    }
+
+    .viewer-stage img {
+      max-width: 100%;
+      max-height: min(84vh, 860px);
+      object-fit: contain;
+    }
+
+    .viewer-info {
+      padding: 20px;
+      border-left: 1px solid rgba(255,255,255,.12);
+      overflow: auto;
+    }
+
+    .viewer-info .card-meta {
+      color: #e7b6c9;
+    }
+
+    .viewer-info h3 {
+      margin: 0 0 10px;
+      font-size: 1.24rem;
+      letter-spacing: 0;
+    }
+
+    .viewer-info p {
+      margin: 0 0 18px;
+      color: rgba(255,255,255,.72);
+      line-height: 1.75;
+      white-space: pre-line;
+      word-break: keep-all;
     }
 
     .modal-head,
@@ -656,8 +722,14 @@
       .grid.three,
       .profile-list,
       .gallery,
+      .viewer-body,
       .field-grid {
         grid-template-columns: 1fr;
+      }
+
+      .viewer-info {
+        border-left: 0;
+        border-top: 1px solid rgba(255,255,255,.12);
       }
     }
   </style>
@@ -730,6 +802,20 @@
         <button class="btn" value="default" type="submit">저장</button>
       </div>
     </form>
+  </dialog>
+
+  <dialog id="imageViewerDialog" class="viewer-dialog" aria-label="이미지 크게 보기">
+    <div class="viewer-body">
+      <div class="viewer-stage">
+        <img id="viewerImage" src="" alt="">
+      </div>
+      <div class="viewer-info">
+        <div class="card-meta" id="viewerType"></div>
+        <h3 id="viewerTitle"></h3>
+        <p id="viewerContent"></p>
+        <button class="btn secondary" id="closeImageViewer" type="button">닫기</button>
+      </div>
+    </div>
   </dialog>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -877,6 +963,7 @@
     const form = document.querySelector("#editorForm");
     const dialogTitle = document.querySelector("#dialogTitle");
     const dialogBody = document.querySelector("#dialogBody");
+    const imageViewerDialog = document.querySelector("#imageViewerDialog");
     const toast = document.querySelector("#toast");
 
     function clone(value) {
@@ -1053,6 +1140,9 @@
       section.querySelectorAll("[data-pin]").forEach(button => {
         button.addEventListener("click", () => togglePinnedGalleryItem(button.dataset.pin));
       });
+      section.querySelectorAll("[data-view]").forEach(button => {
+        button.addEventListener("click", () => openImageViewer(button.dataset.view));
+      });
     }
 
     function pinnedGalleryItems() {
@@ -1063,7 +1153,9 @@
       if (collectionKey === "gallery") {
         return `
           <article class="card gallery-card">
-            <img src="${escapeHtml(item.src || REFERENCE_IMAGE)}" alt="${escapeHtml(item.title)}">
+            <button class="gallery-image-button" type="button" data-view="${item.id}" aria-label="${escapeHtml(item.title)} 이미지 크게 보기">
+              <img src="${escapeHtml(item.src || REFERENCE_IMAGE)}" alt="${escapeHtml(item.title)}">
+            </button>
             <div class="body">
               <div class="card-meta">${escapeHtml(item.type || "이미지")}</div>
               <h3>${escapeHtml(item.title)}</h3>
@@ -1106,6 +1198,18 @@
     function togglePinnedGalleryItem(id) {
       state.gallery = state.gallery.map(item => item.id === id ? { ...item, pinned: !item.pinned } : item);
       saveState("갤러리 고정 상태를 변경했습니다.");
+    }
+
+    function openImageViewer(id) {
+      const item = state.gallery.find(entry => entry.id === id);
+      if (!item) return;
+
+      document.querySelector("#viewerImage").src = item.src || REFERENCE_IMAGE;
+      document.querySelector("#viewerImage").alt = item.title;
+      document.querySelector("#viewerType").textContent = item.type || "이미지";
+      document.querySelector("#viewerTitle").textContent = item.title;
+      document.querySelector("#viewerContent").textContent = item.content || "";
+      imageViewerDialog.showModal();
     }
 
     function openProfileEditor() {
@@ -1285,6 +1389,10 @@
 
     document.querySelector("#closeDialogBtn").addEventListener("click", () => dialog.close());
     document.querySelector("#cancelBtn").addEventListener("click", () => dialog.close());
+    document.querySelector("#closeImageViewer").addEventListener("click", () => imageViewerDialog.close());
+    imageViewerDialog.addEventListener("click", event => {
+      if (event.target === imageViewerDialog) imageViewerDialog.close();
+    });
     document.querySelector("#exportBtn").addEventListener("click", exportData);
     document.querySelector("#importFile").addEventListener("change", event => {
       const file = event.target.files?.[0];
