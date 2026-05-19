@@ -1,0 +1,1240 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>천령 天靈 Cheonryeong Archive</title>
+  <style>
+    :root {
+      --ink: #271d27;
+      --muted: #746b75;
+      --line: #ddd9e1;
+      --paper: #fbfaf8;
+      --panel: #ffffff;
+      --mist: #eef4f3;
+      --silver: #cfd6df;
+      --plum: #a84770;
+      --wine: #61223d;
+      --night: #312d3a;
+      --gold: #c49b67;
+      --danger: #9b303f;
+      --shadow: 0 18px 50px rgba(49, 45, 58, .12);
+      --radius: 8px;
+      font-family: "Pretendard", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        linear-gradient(135deg, rgba(238,244,243,.88), rgba(251,250,248,.92) 36%, rgba(248,238,243,.7)),
+        radial-gradient(circle at 16% 18%, rgba(168,71,112,.12), transparent 24rem),
+        var(--paper);
+    }
+
+    button, input, textarea, select {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    img {
+      display: block;
+      max-width: 100%;
+    }
+
+    .app {
+      width: min(1440px, 100%);
+      margin: 0 auto;
+      padding: 22px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 0 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      border: 1px solid rgba(97,34,61,.24);
+      transform: rotate(45deg);
+      background: linear-gradient(145deg, #fff, #eef4f3);
+      position: relative;
+      flex: 0 0 auto;
+    }
+
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      inset: 10px;
+      border: 2px solid var(--plum);
+      opacity: .55;
+    }
+
+    .brand-text {
+      min-width: 0;
+    }
+
+    .brand-text strong {
+      display: block;
+      font-size: 1.05rem;
+      letter-spacing: 0;
+    }
+
+    .brand-text span {
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .btn {
+      min-height: 38px;
+      padding: 0 13px;
+      border-radius: var(--radius);
+      background: var(--night);
+      color: white;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      box-shadow: 0 7px 18px rgba(49,45,58,.14);
+      white-space: nowrap;
+    }
+
+    .btn.secondary {
+      color: var(--ink);
+      background: rgba(255,255,255,.86);
+      border: 1px solid var(--line);
+      box-shadow: none;
+    }
+
+    .btn.ghost {
+      color: var(--wine);
+      background: transparent;
+      border: 1px solid rgba(97,34,61,.16);
+      box-shadow: none;
+    }
+
+    .btn.danger {
+      background: var(--danger);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 270px minmax(0, 1fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 16px;
+      background: rgba(255,255,255,.82);
+      border: 1px solid rgba(221,217,225,.78);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .portrait-strip {
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #fff, rgba(238,244,243,.7));
+    }
+
+    .portrait-strip img {
+      width: 100%;
+      aspect-ratio: 3 / 4;
+      object-fit: cover;
+      object-position: 18% center;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: white;
+    }
+
+    .nav {
+      display: grid;
+      padding: 8px;
+      gap: 4px;
+    }
+
+    .nav button {
+      width: 100%;
+      min-height: 42px;
+      border-radius: 7px;
+      padding: 0 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--ink);
+      background: transparent;
+      text-align: left;
+    }
+
+    .nav button:hover,
+    .nav button.active {
+      background: var(--mist);
+    }
+
+    .nav b {
+      font-size: .95rem;
+      font-weight: 700;
+    }
+
+    .nav span {
+      color: var(--muted);
+      font-size: .78rem;
+    }
+
+    main {
+      min-width: 0;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(280px, 42%) minmax(0, 1fr);
+      gap: 20px;
+      align-items: stretch;
+      min-height: 560px;
+      margin-bottom: 20px;
+    }
+
+    .hero-image {
+      position: relative;
+      overflow: hidden;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: white;
+      box-shadow: var(--shadow);
+    }
+
+    .hero-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 16% center;
+    }
+
+    .hero-image::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 58%, rgba(39,29,39,.62));
+      pointer-events: none;
+    }
+
+    .quote {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 18px;
+      color: white;
+      z-index: 1;
+      text-shadow: 0 2px 16px rgba(0,0,0,.32);
+    }
+
+    .quote p {
+      margin: 0;
+      font-size: clamp(1.05rem, 1.6vw, 1.45rem);
+      line-height: 1.55;
+      word-break: keep-all;
+    }
+
+    .hero-copy {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 18px;
+      padding: clamp(22px, 3vw, 42px);
+      background: rgba(255,255,255,.84);
+      border: 1px solid rgba(221,217,225,.78);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--plum);
+      font-size: .86rem;
+      font-weight: 800;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.45rem, 5vw, 5.4rem);
+      line-height: .95;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 16px 0 0;
+      color: var(--muted);
+      line-height: 1.8;
+      max-width: 66ch;
+      word-break: keep-all;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 26px;
+    }
+
+    .stat {
+      min-height: 78px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(251,250,248,.72);
+    }
+
+    .stat small {
+      display: block;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: .98rem;
+      word-break: keep-all;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tag {
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: #f3edf0;
+      color: var(--wine);
+      font-size: .86rem;
+      border: 1px solid rgba(168,71,112,.18);
+    }
+
+    .section {
+      display: none;
+      animation: rise .18s ease;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 14px;
+      margin: 4px 0 14px;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font-size: clamp(1.4rem, 2.4vw, 2.15rem);
+      letter-spacing: 0;
+    }
+
+    .section-head p {
+      margin: 6px 0 0;
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .grid.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.88);
+      padding: 16px;
+      box-shadow: 0 10px 26px rgba(49,45,58,.07);
+    }
+
+    .card h3 {
+      margin: 0 0 8px;
+      font-size: 1.05rem;
+      letter-spacing: 0;
+    }
+
+    .card p {
+      color: var(--muted);
+      line-height: 1.75;
+      white-space: pre-line;
+      word-break: keep-all;
+      margin: 0;
+    }
+
+    .card-meta {
+      color: var(--plum);
+      font-size: .84rem;
+      font-weight: 800;
+      margin-bottom: 7px;
+    }
+
+    .card-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .mini-btn {
+      min-height: 32px;
+      padding: 0 10px;
+      border-radius: 7px;
+      background: var(--mist);
+      color: var(--night);
+      border: 1px solid rgba(207,214,223,.82);
+    }
+
+    .mini-btn.danger {
+      background: #fff0f2;
+      color: var(--danger);
+      border-color: rgba(155,48,63,.22);
+    }
+
+    .profile-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .profile-item {
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.7);
+    }
+
+    .profile-item small {
+      color: var(--muted);
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .profile-item strong {
+      display: block;
+      word-break: keep-all;
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .gallery-card {
+      overflow: hidden;
+      padding: 0;
+    }
+
+    .gallery-card img {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
+      background: var(--mist);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .gallery-card .body {
+      padding: 14px;
+    }
+
+    .empty {
+      padding: 32px;
+      border: 1px dashed var(--silver);
+      border-radius: var(--radius);
+      color: var(--muted);
+      text-align: center;
+      background: rgba(255,255,255,.58);
+    }
+
+    dialog {
+      width: min(720px, calc(100% - 28px));
+      border: 0;
+      border-radius: var(--radius);
+      padding: 0;
+      box-shadow: 0 26px 80px rgba(39,29,39,.28);
+      background: white;
+      color: var(--ink);
+    }
+
+    dialog::backdrop {
+      background: rgba(39,29,39,.38);
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-head,
+    .modal-foot {
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .modal-foot {
+      border-top: 1px solid var(--line);
+      border-bottom: 0;
+      justify-content: flex-end;
+    }
+
+    .modal-head h3 {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+
+    .modal-body {
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+      max-height: min(70vh, 720px);
+      overflow: auto;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      color: var(--muted);
+      font-size: .9rem;
+      font-weight: 700;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      color: var(--ink);
+      padding: 10px 11px;
+      outline: none;
+    }
+
+    textarea {
+      min-height: 140px;
+      resize: vertical;
+      line-height: 1.65;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--plum);
+      box-shadow: 0 0 0 3px rgba(168,71,112,.14);
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 20;
+      background: var(--night);
+      color: white;
+      padding: 12px 14px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(10px);
+      pointer-events: none;
+      transition: .2s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 1050px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+      }
+
+      .portrait-strip {
+        display: none;
+      }
+
+      .nav {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .hero {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-image {
+        min-height: 520px;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .app {
+        padding: 14px;
+      }
+
+      .topbar,
+      .section-head {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .actions {
+        justify-content: stretch;
+      }
+
+      .actions .btn,
+      .section-head .btn {
+        justify-content: center;
+        width: 100%;
+      }
+
+      .nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .hero {
+        min-height: 0;
+      }
+
+      .hero-image {
+        min-height: 440px;
+      }
+
+      .stat-grid,
+      .grid,
+      .grid.three,
+      .profile-list,
+      .gallery,
+      .field-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div class="brand-text">
+          <strong>천령 天靈 Cheonryeong</strong>
+          <span>백사선인, 몽취, 유랑하는 뱀 요괴</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn secondary" id="exportBtn" type="button">내보내기</button>
+        <label class="btn secondary" for="importFile">가져오기</label>
+        <input class="hidden" id="importFile" type="file" accept="application/json">
+        <button class="btn ghost" id="resetBtn" type="button">초기화</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar" aria-label="천령 자료 메뉴">
+        <div class="portrait-strip">
+          <img src="assets/cheonryeong-reference.png" alt="천령 캐릭터 시트">
+        </div>
+        <nav class="nav" id="nav"></nav>
+      </aside>
+
+      <main>
+        <section class="hero" aria-label="천령 대표 화면">
+          <div class="hero-image">
+            <img src="assets/cheonryeong-reference.png" alt="천령 캐릭터 전신 이미지">
+            <div class="quote">
+              <p id="heroQuote"></p>
+            </div>
+          </div>
+          <div class="hero-copy">
+            <div>
+              <p class="eyebrow" id="heroAliases"></p>
+              <h1>천령<br>天靈</h1>
+              <p class="subtitle" id="heroSummary"></p>
+              <div class="stat-grid" id="statGrid"></div>
+            </div>
+            <div class="tag-row" id="tagRow"></div>
+          </div>
+        </section>
+
+        <section class="section active" id="profileSection"></section>
+        <section class="section" id="storySection"></section>
+        <section class="section" id="abilitySection"></section>
+        <section class="section" id="gallerySection"></section>
+        <section class="section" id="worldSection"></section>
+        <section class="section" id="familiarSection"></section>
+        <section class="section" id="memoSection"></section>
+      </main>
+    </div>
+  </div>
+
+  <dialog id="editorDialog">
+    <form method="dialog" id="editorForm">
+      <div class="modal-head">
+        <h3 id="dialogTitle">항목 편집</h3>
+        <button class="mini-btn" value="cancel" type="button" id="closeDialogBtn">닫기</button>
+      </div>
+      <div class="modal-body" id="dialogBody"></div>
+      <div class="modal-foot">
+        <button class="btn secondary" value="cancel" type="button" id="cancelBtn">취소</button>
+        <button class="btn" value="default" type="submit">저장</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const STORAGE_KEY = "cheonryeong.archive.v1";
+    const REFERENCE_IMAGE = "assets/cheonryeong-reference.png";
+
+    const defaultState = {
+      profile: {
+        name: "천령",
+        hanja: "天靈",
+        english: "Cheonryeong",
+        age: "불명(不明)",
+        gender: "남성",
+        species: "뱀 요괴",
+        faction: "무소속 (유랑자)",
+        height: "184cm",
+        weight: "68kg",
+        aliases: "백사선인 (白蛇仙人), 몽취 (夢取)",
+        quote: "— 그래, 어디 한 번 보자꾸나. 대가는 천천히 정해도 늦지 않으니.",
+        summary: "알 수 없는 분위기를 두른 채 오직 자신의 변덕과 호기심만을 원동력으로 살아간다. 호기심 많고 장난스럽고 낙천적이며, 동시에 무관심하고 품위 있고 교활한 유랑자.",
+        likes: "따뜻한 양지와 햇살, 새로운 물안개, 변화무쌍한 인간의 감정, 조용한 낮잠, 자신의 권속들, 정이 들어버린 가여운 인간",
+        dislikes: "추위와 그늘진 곳, 멍청한 자들, 한곳에 매이는 것, 자기 변덕을 방해받는 것",
+        foods: "따뜻한 청주와 다과, 단감, 백도, 무화과",
+        hatedFoods: "차게 식은 음식, 비린 것, 향이 너무 강한 향신료"
+      },
+      story: [
+        {
+          id: crypto.randomUUID(),
+          title: "혼돈의 시절",
+          type: "과거",
+          content: "천령은 인간이라는 존재에 깊은 호기심을 품었다. 찰나의 생을 살아가며 별것 아닌 일에 울고 웃고, 어제 함께 떠들던 자에게 다음 날 칼을 겨누는 것이 신기했다. 반짝이는 돌덩어리 하나에 전쟁까지 벌이는 그들을 보며 흥미는 점점 깊어졌다."
+        },
+        {
+          id: crypto.randomUUID(),
+          title: "영의와 음독",
+          type: "전승",
+          content: "그는 종종 인간들 사이에 흘러들어 의원의 모습으로 자리했다. 그가 머무는 곳에서는 죽어가던 자들이 일어나고 역병이 사그라들었다. 그러나 흥미가 식으면 정체불명의 역병과 독이 돌았고, 인간들은 두 모습이 같은 자임을 알지 못했다."
+        },
+        {
+          id: crypto.randomUUID(),
+          title: "현재의 유랑",
+          type: "현재",
+          content: "비교적 평화롭고 안정된 지금, 천령은 한곳에 정착하지 않고 물이 흐르는 대로 길을 떠난다. 새로운 약초, 진귀한 독, 요괴들 사이의 소문, 혹은 긴 생의 갈증을 채워줄 무언가를 찾아서."
+        }
+      ],
+      abilities: [
+        {
+          id: crypto.randomUUID(),
+          title: "치유",
+          type: "生",
+          content: "숨이 끊어지기 직전의 자를 되돌려놓는 일도 가능하다고 전해진다. 약은 직접 조제하며, 천령 본인의 비늘 한 조각이나 머리칼 한 가닥이 어떤 영약보다도 강한 효력을 가진다."
+        },
+        {
+          id: crypto.randomUUID(),
+          title: "독",
+          type: "死",
+          content: "천 가지 독을 다룬다. 단숨에 숨을 끊는 극독부터 정해진 날에 발현되는 시간 독, 한 가지 감정만을 갉아먹는 마음 독까지 정교함의 끝을 알 수 없다."
+        },
+        {
+          id: crypto.randomUUID(),
+          title: "夢 (꿈)",
+          type: "안개",
+          content: "천령을 중심으로 안개가 피어오르고, 그 안개에 휩싸인 자는 천령이 보여주는 꿈에 사로잡힌다. 지금은 주로 눈을 맞추는 것만으로 상대의 정신을 잠시 매만지는 가벼운 손장난으로 쓰인다."
+        }
+      ],
+      gallery: [
+        {
+          id: crypto.randomUUID(),
+          title: "캐릭터 시트",
+          type: "기본 이미지",
+          src: REFERENCE_IMAGE,
+          content: "소루 님 작업 캐릭터 시트. 전신, 후면, 장신구, 문양, 색상 팔레트 참고."
+        }
+      ],
+      world: [
+        {
+          id: crypto.randomUUID(),
+          title: "백사선인 (白蛇仙人)",
+          type: "별칭",
+          content: "산속이나 외진 마을에 홀연히 나타나 사람을 살리고 사라지는 새하얀 손님. 그를 마주치고 약을 받아 살아 돌아오면 평생의 복이라는 미신이 전해진다."
+        },
+        {
+          id: crypto.randomUUID(),
+          title: "몽취 (夢取)",
+          type: "옛 이름",
+          content: "혼돈의 시절을 함께 보낸 늙은 요괴들이 그를 기억하는 이름. 꿈을 거두던 자. 그 시절의 천령이 어떤 자였는지를 아는 자들만 쓰는 호칭이다."
+        }
+      ],
+      familiars: [
+        {
+          id: crypto.randomUUID(),
+          title: "미령 (霧靈)",
+          type: "첫째",
+          content: "목과 어깨를 감싸는 가장 크고 오래된 권속. 차분하고 묵직한 성정으로 다른 권속들의 우두머리 격을 차지한다."
+        },
+        {
+          id: crypto.randomUUID(),
+          title: "야설 (夜雪)",
+          type: "둘째",
+          content: "허리께를 두 번 감아 띠처럼 자리한다. 가장 영민하고 빠른 권속으로, 먼 곳의 소식을 살피거나 정찰이 필요할 때 보내진다."
+        },
+        {
+          id: crypto.randomUUID(),
+          title: "백련 (白蓮)",
+          type: "막내",
+          content: "왼쪽 손목에 팔찌처럼 감긴 권속. 가장 활발하고 짓궂은 성격으로 인간에 대한 호기심이 많다."
+        }
+      ],
+      memos: [
+        {
+          id: crypto.randomUUID(),
+          title: "버릇 및 습관",
+          type: "행동",
+          content: "상대의 이름을 결코 외우지 않고 매번 제 입맛대로 부른다. 이동할 때는 거의 안개에 몸을 싣고 흘러가듯 움직이며, 인기척이 없을 때만 뱀을 불러낸다."
+        },
+        {
+          id: crypto.randomUUID(),
+          title: "변온의 본능",
+          type: "체질",
+          content: "추위에 매우 약하다. 양지바른 바위, 따뜻한 햇살이 드는 자리, 김이 오르는 온천이나 인간의 화롯가 근처에서 늘어지는 모습이 자주 목격된다."
+        }
+      ]
+    };
+
+    const tabs = [
+      { id: "profile", label: "프로필", hint: "기본 설정", section: "profileSection" },
+      { id: "story", label: "서사", hint: "과거와 현재", section: "storySection", collection: "story" },
+      { id: "ability", label: "능력", hint: "生死兩面", section: "abilitySection", collection: "abilities" },
+      { id: "gallery", label: "갤러리", hint: "이미지 자료", section: "gallerySection", collection: "gallery" },
+      { id: "world", label: "세계관", hint: "전승과 소문", section: "worldSection", collection: "world" },
+      { id: "familiar", label: "권속", hint: "眷屬", section: "familiarSection", collection: "familiars" },
+      { id: "memo", label: "메모", hint: "설정 노트", section: "memoSection", collection: "memos" }
+    ];
+
+    let state = loadState();
+    let activeTab = "profile";
+    let pendingSubmit = null;
+
+    const nav = document.querySelector("#nav");
+    const dialog = document.querySelector("#editorDialog");
+    const form = document.querySelector("#editorForm");
+    const dialogTitle = document.querySelector("#dialogTitle");
+    const dialogBody = document.querySelector("#dialogBody");
+    const toast = document.querySelector("#toast");
+
+    function clone(value) {
+      return JSON.parse(JSON.stringify(value));
+    }
+
+    function loadState() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved) return clone(defaultState);
+      try {
+        return { ...clone(defaultState), ...JSON.parse(saved) };
+      } catch {
+        return clone(defaultState);
+      }
+    }
+
+    function saveState(message = "저장되었습니다.") {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      render();
+      showToast(message);
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 1800);
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      }[char]));
+    }
+
+    function renderNav() {
+      nav.innerHTML = tabs.map(tab => `
+        <button type="button" class="${activeTab === tab.id ? "active" : ""}" data-tab="${tab.id}">
+          <b>${tab.label}</b>
+          <span>${tab.hint}</span>
+        </button>
+      `).join("");
+
+      nav.querySelectorAll("button").forEach(button => {
+        button.addEventListener("click", () => {
+          activeTab = button.dataset.tab;
+          render();
+          document.querySelector(`#${tabs.find(tab => tab.id === activeTab).section}`).scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      });
+    }
+
+    function renderHero() {
+      const p = state.profile;
+      document.querySelector("#heroQuote").textContent = p.quote;
+      document.querySelector("#heroAliases").textContent = p.aliases;
+      document.querySelector("#heroSummary").textContent = p.summary;
+
+      const stats = [
+        ["나이", p.age],
+        ["종족", p.species],
+        ["소속", p.faction],
+        ["신장 / 체중", `${p.height} / ${p.weight}`]
+      ];
+
+      document.querySelector("#statGrid").innerHTML = stats.map(([label, value]) => `
+        <div class="stat">
+          <small>${escapeHtml(label)}</small>
+          <strong>${escapeHtml(value)}</strong>
+        </div>
+      `).join("");
+
+      document.querySelector("#tagRow").innerHTML = [
+        p.gender,
+        p.likes.split(",")[0],
+        "치유와 독",
+        "안개와 꿈",
+        "은빛 권속"
+      ].map(tag => `<span class="tag">${escapeHtml(tag.trim())}</span>`).join("");
+    }
+
+    function sectionShell(title, subtitle, actionLabel, action) {
+      return `
+        <div class="section-head">
+          <div>
+            <h2>${title}</h2>
+            <p>${subtitle}</p>
+          </div>
+          ${actionLabel ? `<button class="btn" type="button" data-action="${action}">${actionLabel}</button>` : ""}
+        </div>
+      `;
+    }
+
+    function renderProfile() {
+      const p = state.profile;
+      const section = document.querySelector("#profileSection");
+      const items = [
+        ["이름", `${p.name} ${p.hanja} ${p.english}`],
+        ["나이", p.age],
+        ["성별", p.gender],
+        ["종족", p.species],
+        ["소속", p.faction],
+        ["키 / 몸무게", `${p.height} / ${p.weight}`],
+        ["별칭", p.aliases],
+        ["좋아하는 것", p.likes],
+        ["싫어하는 것", p.dislikes],
+        ["좋아하는 음식", p.foods],
+        ["싫어하는 음식", p.hatedFoods],
+        ["대표 문구", p.quote]
+      ];
+
+      section.innerHTML = sectionShell("프로필", "기본 설정과 성격, 선호 정보를 수정합니다.", "프로필 수정", "edit-profile") + `
+        <div class="card">
+          <h3>성격</h3>
+          <p>${escapeHtml(p.summary)}</p>
+        </div>
+        <div style="height:14px"></div>
+        <div class="profile-list">
+          ${items.map(([label, value]) => `
+            <div class="profile-item">
+              <small>${escapeHtml(label)}</small>
+              <strong>${escapeHtml(value)}</strong>
+            </div>
+          `).join("")}
+        </div>
+      `;
+
+      section.querySelector("[data-action='edit-profile']").addEventListener("click", openProfileEditor);
+    }
+
+    function renderCollection(sectionId, collectionKey, title, subtitle, addLabel, columns = "grid") {
+      const section = document.querySelector(`#${sectionId}`);
+      const items = state[collectionKey] ?? [];
+      const isGallery = collectionKey === "gallery";
+      const body = items.length ? `
+        <div class="${isGallery ? "gallery" : columns}">
+          ${items.map(item => renderItemCard(collectionKey, item)).join("")}
+        </div>
+      ` : `<div class="empty">아직 등록된 항목이 없습니다.</div>`;
+
+      section.innerHTML = sectionShell(title, subtitle, addLabel, `add-${collectionKey}`) + body;
+      section.querySelector(`[data-action='add-${collectionKey}']`).addEventListener("click", () => openItemEditor(collectionKey));
+      section.querySelectorAll("[data-edit]").forEach(button => {
+        button.addEventListener("click", () => openItemEditor(collectionKey, button.dataset.edit));
+      });
+      section.querySelectorAll("[data-delete]").forEach(button => {
+        button.addEventListener("click", () => deleteItem(collectionKey, button.dataset.delete));
+      });
+    }
+
+    function renderItemCard(collectionKey, item) {
+      if (collectionKey === "gallery") {
+        return `
+          <article class="card gallery-card">
+            <img src="${escapeHtml(item.src || REFERENCE_IMAGE)}" alt="${escapeHtml(item.title)}">
+            <div class="body">
+              <div class="card-meta">${escapeHtml(item.type || "이미지")}</div>
+              <h3>${escapeHtml(item.title)}</h3>
+              <p>${escapeHtml(item.content)}</p>
+              ${cardActions(item.id)}
+            </div>
+          </article>
+        `;
+      }
+
+      return `
+        <article class="card">
+          <div class="card-meta">${escapeHtml(item.type || "기록")}</div>
+          <h3>${escapeHtml(item.title)}</h3>
+          <p>${escapeHtml(item.content)}</p>
+          ${cardActions(item.id)}
+        </article>
+      `;
+    }
+
+    function cardActions(id) {
+      return `
+        <div class="card-actions">
+          <button class="mini-btn" type="button" data-edit="${id}">수정</button>
+          <button class="mini-btn danger" type="button" data-delete="${id}">삭제</button>
+        </div>
+      `;
+    }
+
+    function openProfileEditor() {
+      dialogTitle.textContent = "프로필 수정";
+      const p = state.profile;
+      dialogBody.innerHTML = `
+        <div class="field-grid">
+          ${inputField("name", "이름", p.name)}
+          ${inputField("hanja", "한자", p.hanja)}
+          ${inputField("english", "영문명", p.english)}
+          ${inputField("age", "나이", p.age)}
+          ${inputField("gender", "성별", p.gender)}
+          ${inputField("species", "종족", p.species)}
+          ${inputField("faction", "소속", p.faction)}
+          ${inputField("height", "키", p.height)}
+          ${inputField("weight", "몸무게", p.weight)}
+          ${inputField("aliases", "별칭", p.aliases)}
+        </div>
+        ${textareaField("quote", "대표 문구", p.quote)}
+        ${textareaField("summary", "성격 요약", p.summary)}
+        ${textareaField("likes", "좋아하는 것", p.likes)}
+        ${textareaField("dislikes", "싫어하는 것", p.dislikes)}
+        ${textareaField("foods", "좋아하는 음식", p.foods)}
+        ${textareaField("hatedFoods", "싫어하는 음식", p.hatedFoods)}
+      `;
+
+      pendingSubmit = () => {
+        const data = new FormData(form);
+        Object.keys(state.profile).forEach(key => {
+          state.profile[key] = data.get(key)?.toString().trim() || "";
+        });
+        saveState("프로필을 저장했습니다.");
+      };
+      dialog.showModal();
+    }
+
+    function openItemEditor(collectionKey, id = null) {
+      const item = id ? state[collectionKey].find(entry => entry.id === id) : null;
+      const draft = item ?? { title: "", type: "", src: "", content: "" };
+      dialogTitle.textContent = item ? "항목 수정" : "항목 등록";
+      dialogBody.innerHTML = `
+        <div class="field-grid">
+          ${inputField("title", "제목", draft.title)}
+          ${inputField("type", "분류", draft.type)}
+        </div>
+        ${collectionKey === "gallery" ? `
+          ${inputField("src", "이미지 주소", draft.src || "")}
+          <label>로컬 이미지 추가
+            <input id="imageFile" type="file" accept="image/*">
+          </label>
+        ` : ""}
+        ${textareaField("content", "내용", draft.content)}
+      `;
+
+      const imageFile = dialogBody.querySelector("#imageFile");
+      pendingSubmit = async () => {
+        const data = new FormData(form);
+        const next = {
+          id: item?.id ?? crypto.randomUUID(),
+          title: data.get("title")?.toString().trim() || "제목 없음",
+          type: data.get("type")?.toString().trim() || "기록",
+          content: data.get("content")?.toString().trim() || ""
+        };
+
+        if (collectionKey === "gallery") {
+          next.src = data.get("src")?.toString().trim() || item?.src || REFERENCE_IMAGE;
+          if (imageFile?.files?.[0]) {
+            next.src = await readFileAsDataUrl(imageFile.files[0]);
+          }
+        }
+
+        if (item) {
+          state[collectionKey] = state[collectionKey].map(entry => entry.id === item.id ? next : entry);
+        } else {
+          state[collectionKey] = [next, ...state[collectionKey]];
+        }
+
+        saveState(item ? "항목을 수정했습니다." : "새 항목을 등록했습니다.");
+      };
+      dialog.showModal();
+    }
+
+    function deleteItem(collectionKey, id) {
+      const item = state[collectionKey].find(entry => entry.id === id);
+      if (!item) return;
+      if (!confirm(`'${item.title}' 항목을 삭제할까요?`)) return;
+      state[collectionKey] = state[collectionKey].filter(entry => entry.id !== id);
+      saveState("항목을 삭제했습니다.");
+    }
+
+    function inputField(name, label, value) {
+      return `
+        <label>${label}
+          <input name="${name}" value="${escapeHtml(value)}">
+        </label>
+      `;
+    }
+
+    function textareaField(name, label, value) {
+      return `
+        <label>${label}
+          <textarea name="${name}">${escapeHtml(value)}</textarea>
+        </label>
+      `;
+    }
+
+    function readFileAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function exportData() {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = "cheonryeong-archive.json";
+      anchor.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importData(file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const imported = JSON.parse(reader.result);
+          state = { ...clone(defaultState), ...imported };
+          saveState("자료를 가져왔습니다.");
+        } catch {
+          showToast("JSON 파일을 읽지 못했습니다.");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function render() {
+      renderNav();
+      renderHero();
+      tabs.forEach(tab => {
+        document.querySelector(`#${tab.section}`).classList.toggle("active", tab.id === activeTab);
+      });
+      renderProfile();
+      renderCollection("storySection", "story", "서사", "과거, 현재, 사건 기록을 관리합니다.", "서사 등록");
+      renderCollection("abilitySection", "abilities", "능력", "치유와 독, 꿈과 안개에 관련된 능력을 정리합니다.", "능력 등록", "grid three");
+      renderCollection("gallerySection", "gallery", "이미지 갤러리", "캐릭터 이미지와 참고 자료를 등록합니다.", "이미지 등록");
+      renderCollection("worldSection", "world", "세계관", "별칭, 전승, 주변 소문과 배경 설정을 저장합니다.", "세계관 등록");
+      renderCollection("familiarSection", "familiars", "권속", "천령을 따르는 은빛 뱀 권속들을 관리합니다.", "권속 등록", "grid three");
+      renderCollection("memoSection", "memos", "설정 메모", "버릇, 습관, 추가 아이디어를 자유롭게 남깁니다.", "메모 등록");
+    }
+
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+      if (pendingSubmit) await pendingSubmit();
+      dialog.close();
+    });
+
+    document.querySelector("#closeDialogBtn").addEventListener("click", () => dialog.close());
+    document.querySelector("#cancelBtn").addEventListener("click", () => dialog.close());
+    document.querySelector("#exportBtn").addEventListener("click", exportData);
+    document.querySelector("#importFile").addEventListener("change", event => {
+      const file = event.target.files?.[0];
+      if (file) importData(file);
+      event.target.value = "";
+    });
+    document.querySelector("#resetBtn").addEventListener("click", () => {
+      if (!confirm("저장된 수정 내용을 초기 자료로 되돌릴까요?")) return;
+      state = clone(defaultState);
+      saveState("초기 자료로 되돌렸습니다.");
+    });
+
+    render();
+  </script>
+</body>
+</html>
