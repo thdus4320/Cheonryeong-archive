@@ -5,10 +5,28 @@ create table if not exists public.gallery_items (
   content text default '',
   image_path text not null,
   image_url text not null,
+  image_paths jsonb not null default '[]'::jsonb,
+  image_urls jsonb not null default '[]'::jsonb,
+  cover_index integer not null default 0,
   pinned boolean not null default false,
   status text not null default 'approved',
   created_at timestamptz not null default now()
 );
+
+alter table public.gallery_items
+add column if not exists image_paths jsonb not null default '[]'::jsonb;
+
+alter table public.gallery_items
+add column if not exists image_urls jsonb not null default '[]'::jsonb;
+
+alter table public.gallery_items
+add column if not exists cover_index integer not null default 0;
+
+update public.gallery_items
+set
+  image_paths = case when image_paths = '[]'::jsonb then jsonb_build_array(image_path) else image_paths end,
+  image_urls = case when image_urls = '[]'::jsonb then jsonb_build_array(image_url) else image_urls end
+where image_path is not null and image_url is not null;
 
 alter table public.gallery_items enable row level security;
 

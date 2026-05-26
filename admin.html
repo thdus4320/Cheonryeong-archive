@@ -150,6 +150,28 @@
       margin-top: 12px;
     }
 
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .preview-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 10px;
+      background: #fff;
+    }
+
+    .preview-card img {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      object-fit: contain;
+      background: var(--mist);
+      border-radius: 7px;
+    }
+
     .list {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -236,16 +258,40 @@
         <label>설명
           <textarea name="content" placeholder="이미지 설명이나 출처 메모"></textarea>
         </label>
-        <label>이미지 파일
+        <label>이미지 파일 1
           <input id="imageFile" name="imageFile" type="file" accept="image/*">
         </label>
+        <label>이미지 파일 2
+          <input id="imageFile2" name="imageFile2" type="file" accept="image/*">
+        </label>
+        <div class="grid">
+          <label>
+            <span>
+              <input name="coverIndex" type="radio" value="0" checked>
+              이미지 1을 대표 이미지로 사용
+            </span>
+          </label>
+          <label>
+            <span>
+              <input name="coverIndex" type="radio" value="1">
+              이미지 2를 대표 이미지로 사용
+            </span>
+          </label>
+        </div>
         <label>
           <span>
             <input name="pinned" type="checkbox">
             상단 고정
           </span>
         </label>
-        <img class="preview hidden" id="preview" alt="업로드 미리보기">
+        <div class="preview-grid hidden" id="previewGrid">
+          <div class="preview-card hidden" id="previewCard1">
+            <img id="preview" alt="업로드 미리보기 1">
+          </div>
+          <div class="preview-card hidden" id="previewCard2">
+            <img id="preview2" alt="업로드 미리보기 2">
+          </div>
+        </div>
         <div class="actions">
           <button class="btn secondary hidden" id="cancelEditBtn" type="button">수정 취소</button>
           <button class="btn secondary" id="logoutBtn" type="button">로그아웃</button>
@@ -279,7 +325,12 @@
     const statusEl = document.querySelector("#status");
     const form = document.querySelector("#adminUploadForm");
     const fileInput = document.querySelector("#imageFile");
+    const fileInput2 = document.querySelector("#imageFile2");
+    const previewGrid = document.querySelector("#previewGrid");
+    const previewCard1 = document.querySelector("#previewCard1");
+    const previewCard2 = document.querySelector("#previewCard2");
     const preview = document.querySelector("#preview");
+    const preview2 = document.querySelector("#preview2");
     const listPanel = document.querySelector("#listPanel");
     const adminGalleryList = document.querySelector("#adminGalleryList");
     const formTitle = document.querySelector("#formTitle");
@@ -302,6 +353,19 @@
       return `${SUPABASE_URL}/storage/v1/object/public/${SUPABASE_GALLERY_BUCKET}/${encodeURI(path)}`;
     }
 
+    function itemImageUrls(item) {
+      return Array.isArray(item.image_urls) && item.image_urls.length ? item.image_urls : [item.image_url].filter(Boolean);
+    }
+
+    function itemImagePaths(item) {
+      return Array.isArray(item.image_paths) && item.image_paths.length ? item.image_paths : [item.image_path].filter(Boolean);
+    }
+
+    function coverImageUrl(item) {
+      const urls = itemImageUrls(item);
+      return urls[item.cover_index || 0] || urls[0] || "";
+    }
+
     async function refreshSession() {
       const { data } = await client.auth.getSession();
       setSignedIn(Boolean(data.session));
@@ -322,7 +386,7 @@
     async function fetchAdminGalleryItems() {
       const { data, error } = await client
         .from("gallery_items")
-        .select("id,title,type,content,image_path,image_url,pinned,status,created_at")
+        .select("id,title,type,content,image_path,image_url,image_paths,image_urls,cover_index,pinned,status,created_at")
         .order("pinned", { ascending: false })
         .order("created_at", { ascending: false });
 
@@ -343,10 +407,10 @@
 
       adminGalleryList.innerHTML = adminGalleryItems.map(item => `
         <article class="item">
-          <img src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.title)}">
+          <img src="${escapeHtml(coverImageUrl(item))}" alt="${escapeHtml(item.title)}">
           <div class="item-body">
             <h3>${escapeHtml(item.title)}</h3>
-            <p>${escapeHtml(item.type || "이미지")}${item.pinned ? " · 상단 고정" : ""}</p>
+            <p>${escapeHtml(item.type || "이미지")} · ${itemImageUrls(item).length}장${item.pinned ? " · 상단 고정" : ""}</p>
             <p>${escapeHtml(item.content || "")}</p>
             <div class="actions">
               <button class="btn secondary" type="button" data-edit="${item.id}">수정</button>
@@ -368,8 +432,11 @@
     function resetFormMode() {
       currentEditId = null;
       form.reset();
-      preview.classList.add("hidden");
+      previewGrid.classList.add("hidden");
+      previewCard1.classList.add("hidden");
+      previewCard2.classList.add("hidden");
       preview.removeAttribute("src");
+      preview2.removeAttribute("src");
       formTitle.textContent = "이미지 업로드";
       submitBtn.textContent = "저장";
       cancelEditBtn.classList.add("hidden");
@@ -385,9 +452,9 @@
       form.elements.type.value = item.type || "";
       form.elements.content.value = item.content || "";
       form.elements.pinned.checked = Boolean(item.pinned);
+      form.elements.coverIndex.value = String(item.cover_index || 0);
       fileInput.required = false;
-      preview.src = item.image_url;
-      preview.classList.remove("hidden");
+      renderPreviewImages(itemImageUrls(item));
       formTitle.textContent = "이미지 수정";
       submitBtn.textContent = "수정 저장";
       cancelEditBtn.classList.remove("hidden");
@@ -406,8 +473,9 @@
         return;
       }
 
-      if (item.image_path) {
-        await client.storage.from(SUPABASE_GALLERY_BUCKET).remove([item.image_path]);
+      const paths = itemImagePaths(item);
+      if (paths.length) {
+        await client.storage.from(SUPABASE_GALLERY_BUCKET).remove(paths);
       }
 
       if (currentEditId === id) resetFormMode();
@@ -431,6 +499,22 @@
         imagePath,
         imageUrl: publicImageUrl(imagePath)
       };
+    }
+
+    async function uploadAdminImages(files) {
+      const uploaded = [];
+      for (const file of files) {
+        if (file) uploaded.push(await uploadAdminImage(file));
+      }
+      return uploaded;
+    }
+
+    function renderPreviewImages(urls = []) {
+      previewGrid.classList.toggle("hidden", !urls.length);
+      previewCard1.classList.toggle("hidden", !urls[0]);
+      previewCard2.classList.toggle("hidden", !urls[1]);
+      if (urls[0]) preview.src = urls[0];
+      if (urls[1]) preview2.src = urls[1];
     }
 
     document.querySelector("#loginBtn").addEventListener("click", async () => {
@@ -457,16 +541,23 @@
     cancelEditBtn.addEventListener("click", resetFormMode);
 
     fileInput.addEventListener("change", () => {
-      const file = fileInput.files?.[0];
-      if (!file) return;
-      preview.src = URL.createObjectURL(file);
-      preview.classList.remove("hidden");
+      renderPreviewImages([
+        fileInput.files?.[0] ? URL.createObjectURL(fileInput.files[0]) : preview.src,
+        fileInput2.files?.[0] ? URL.createObjectURL(fileInput2.files[0]) : preview2.src
+      ].filter(Boolean));
+    });
+
+    fileInput2.addEventListener("change", () => {
+      renderPreviewImages([
+        fileInput.files?.[0] ? URL.createObjectURL(fileInput.files[0]) : preview.src,
+        fileInput2.files?.[0] ? URL.createObjectURL(fileInput2.files[0]) : preview2.src
+      ].filter(Boolean));
     });
 
     form.addEventListener("submit", async event => {
       event.preventDefault();
-      const file = fileInput.files?.[0];
-      if (!file && !currentEditId) {
+      const selectedFiles = [fileInput.files?.[0], fileInput2.files?.[0]].filter(Boolean);
+      if (!selectedFiles.length && !currentEditId) {
         setStatus("이미지 파일을 선택해주세요.");
         return;
       }
@@ -481,15 +572,32 @@
           type: data.get("type")?.toString().trim() || "이미지",
           content: data.get("content")?.toString().trim() || "",
           pinned: Boolean(data.get("pinned")),
+          cover_index: Number(data.get("coverIndex") || 0),
           status: "approved"
         };
 
-        let oldImagePath = null;
-        if (file) {
-          const uploaded = await uploadAdminImage(file);
-          payload.image_path = uploaded.imagePath;
-          payload.image_url = uploaded.imageUrl;
-          oldImagePath = adminGalleryItems.find(item => item.id === currentEditId)?.image_path;
+        let oldImagePaths = [];
+        if (selectedFiles.length) {
+          const uploaded = await uploadAdminImages(selectedFiles.slice(0, 2));
+          const imagePaths = uploaded.map(item => item.imagePath);
+          const imageUrls = uploaded.map(item => item.imageUrl);
+          const safeCoverIndex = Math.min(payload.cover_index, imageUrls.length - 1);
+          payload.cover_index = safeCoverIndex;
+          payload.image_paths = imagePaths;
+          payload.image_urls = imageUrls;
+          payload.image_path = imagePaths[safeCoverIndex];
+          payload.image_url = imageUrls[safeCoverIndex];
+          oldImagePaths = itemImagePaths(adminGalleryItems.find(item => item.id === currentEditId) || {});
+        } else if (currentEditId) {
+          const currentItem = adminGalleryItems.find(item => item.id === currentEditId);
+          const currentUrls = itemImageUrls(currentItem || {});
+          const currentPaths = itemImagePaths(currentItem || {});
+          const safeCoverIndex = Math.min(payload.cover_index, currentUrls.length - 1);
+          payload.cover_index = safeCoverIndex;
+          payload.image_paths = currentPaths;
+          payload.image_urls = currentUrls;
+          payload.image_path = currentPaths[safeCoverIndex];
+          payload.image_url = currentUrls[safeCoverIndex];
         }
 
         const request = currentEditId
@@ -499,8 +607,8 @@
         const { error } = await request;
 
         if (error) throw error;
-        if (oldImagePath) {
-          await client.storage.from(SUPABASE_GALLERY_BUCKET).remove([oldImagePath]);
+        if (oldImagePaths.length) {
+          await client.storage.from(SUPABASE_GALLERY_BUCKET).remove(oldImagePaths);
         }
         resetFormMode();
         await fetchAdminGalleryItems();

@@ -569,6 +569,32 @@
       word-break: keep-all;
     }
 
+    .viewer-thumbs {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .viewer-thumb {
+      padding: 0;
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 7px;
+      overflow: hidden;
+      background: rgba(255,255,255,.08);
+    }
+
+    .viewer-thumb.active {
+      border-color: #e7b6c9;
+      box-shadow: 0 0 0 2px rgba(231,182,201,.28);
+    }
+
+    .viewer-thumb img {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
+    }
+
     .modal-head,
     .modal-foot {
       padding: 16px;
@@ -813,6 +839,7 @@
         <div class="card-meta" id="viewerType"></div>
         <h3 id="viewerTitle"></h3>
         <p id="viewerContent"></p>
+        <div class="viewer-thumbs" id="viewerThumbs"></div>
         <button class="btn secondary" id="closeImageViewer" type="button">닫기</button>
       </div>
     </div>
@@ -1019,12 +1046,18 @@
     }
 
     function mapSupabaseGalleryItem(item) {
+      const imageUrls = Array.isArray(item.image_urls) && item.image_urls.length ? item.image_urls : [item.image_url];
+      const coverIndex = Number.isInteger(item.cover_index) ? item.cover_index : 0;
+      const coverUrl = imageUrls[coverIndex] || imageUrls[0] || item.image_url;
+
       return {
         id: item.id,
         title: item.title || "제목 없음",
         type: item.type || "이미지",
         content: item.content || "",
-        src: item.image_url,
+        src: coverUrl,
+        imageUrls,
+        coverIndex,
         pinned: Boolean(item.pinned),
         status: item.status || "approved",
         remote: true
@@ -1044,7 +1077,7 @@
 
     async function fetchApprovedGalleryItems() {
       try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/gallery_items?select=id,title,type,content,image_url,pinned,status,created_at&status=eq.approved&order=pinned.desc,created_at.desc`, {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/gallery_items?select=id,title,type,content,image_url,image_urls,cover_index,pinned,status,created_at&status=eq.approved&order=pinned.desc,created_at.desc`, {
           headers: supabaseHeaders({ Accept: "application/json" })
         });
 
@@ -1277,13 +1310,31 @@
     function openImageViewer(id) {
       const item = mergeGalleryItems().find(entry => entry.id === id);
       if (!item) return;
+      const imageUrls = item.imageUrls?.length ? item.imageUrls : [item.src || REFERENCE_IMAGE];
+      const initialIndex = item.coverIndex ?? 0;
 
-      document.querySelector("#viewerImage").src = item.src || REFERENCE_IMAGE;
+      setViewerImage(imageUrls[initialIndex] || imageUrls[0], item.title, initialIndex);
       document.querySelector("#viewerImage").alt = item.title;
       document.querySelector("#viewerType").textContent = item.type || "이미지";
       document.querySelector("#viewerTitle").textContent = item.title;
       document.querySelector("#viewerContent").textContent = item.content || "";
+      document.querySelector("#viewerThumbs").innerHTML = imageUrls.map((url, index) => `
+        <button class="viewer-thumb ${index === initialIndex ? "active" : ""}" type="button" data-viewer-index="${index}">
+          <img src="${escapeHtml(url)}" alt="${escapeHtml(`${item.title} ${index + 1}`)}">
+        </button>
+      `).join("");
+      document.querySelectorAll("[data-viewer-index]").forEach(button => {
+        button.addEventListener("click", () => setViewerImage(imageUrls[Number(button.dataset.viewerIndex)], item.title, Number(button.dataset.viewerIndex)));
+      });
       imageViewerDialog.showModal();
+    }
+
+    function setViewerImage(src, title, index) {
+      document.querySelector("#viewerImage").src = src || REFERENCE_IMAGE;
+      document.querySelector("#viewerImage").alt = title;
+      document.querySelectorAll("[data-viewer-index]").forEach(button => {
+        button.classList.toggle("active", Number(button.dataset.viewerIndex) === index);
+      });
     }
 
     function openProfileEditor() {
@@ -1481,6 +1532,7 @@
       state = clone(defaultState);
       saveState("초기 자료로 되돌렸습니다.");
     });
+    document.addEventListener("contextmenu", event => event.preventDefault());
 
     render();
     fetchApprovedGalleryItems();

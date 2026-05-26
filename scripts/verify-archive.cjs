@@ -19,6 +19,10 @@ const requiredSnippets = [
   "data-view",
   "gallery-image-button",
   "viewerImage",
+  "viewerThumbs",
+  "contextmenu",
+  "imageUrls",
+  "coverIndex",
   "SUPABASE_URL",
   "SUPABASE_ANON_KEY",
   "SUPABASE_GALLERY_BUCKET",
@@ -43,6 +47,12 @@ const adminRequiredSnippets = [
   "supabase.createClient",
   "signInWithPassword",
   "uploadAdminImage",
+  "uploadAdminImages",
+  "imageFile2",
+  "coverIndex",
+  "image_paths",
+  "image_urls",
+  "renderPreviewImages",
   "gallery-images",
   "gallery_items",
   "status: \"approved\"",
@@ -92,6 +102,9 @@ for (const snippet of [
   "Admin can insert gallery items",
   "Admin can read gallery items",
   "Admin can upload gallery images",
+  "image_paths jsonb",
+  "image_urls jsonb",
+  "cover_index integer",
   "status = 'approved'"
 ]) {
   if (!sql.includes(snippet)) {
