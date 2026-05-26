@@ -161,7 +161,7 @@
     .portrait-strip {
       padding: 16px;
       border-bottom: 1px solid var(--line);
-      background: linear-gradient(180deg, #fff, rgba(238,244,243,.7));
+      background: #fff;
     }
 
     .portrait-strip img {
@@ -171,7 +171,7 @@
       object-position: 18% center;
       border-radius: var(--radius);
       border: 1px solid var(--line);
-      background: white;
+      background: #fff;
     }
 
     .nav {
@@ -850,6 +850,7 @@
   <script>
     const STORAGE_KEY = "cheonryeong.archive.v1";
     const REFERENCE_IMAGE = "assets/cheonryeong-reference.png";
+    const SIDEBAR_PORTRAIT_IMAGE = "assets/cheonryeong-sidebar-portrait.png";
     const SUPABASE_URL = "https://jsrhdqfflztpzibdjibr.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_kkjg9s5I2--I_yATsgOftg_axBRZ3rI";
     const SUPABASE_GALLERY_BUCKET = "gallery-images";
@@ -1157,7 +1158,7 @@
 
     function renderPortraits() {
       const portrait = state.profile.portraitImage || REFERENCE_IMAGE;
-      document.querySelector("#sidebarPortrait").src = portrait;
+      document.querySelector("#sidebarPortrait").src = SIDEBAR_PORTRAIT_IMAGE;
       document.querySelector("#heroPortrait").src = portrait;
     }
 

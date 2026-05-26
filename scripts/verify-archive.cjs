@@ -26,6 +26,8 @@ const requiredSnippets = [
   "SUPABASE_URL",
   "SUPABASE_ANON_KEY",
   "SUPABASE_GALLERY_BUCKET",
+  "SIDEBAR_PORTRAIT_IMAGE",
+  "cheonryeong-sidebar-portrait.png",
   "fetchApprovedGalleryItems",
   "mergeGalleryItems",
   "return EDIT_MODE ?",
