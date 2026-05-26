@@ -1,6 +1,7 @@
 const fs = require("fs");
 
 const files = ["cheonryeong-archive.html", "index.html"];
+const adminFile = "admin.html";
 const requiredSnippets = [
   "portraitImage:",
   "id=\"hero\"",
@@ -22,11 +23,28 @@ const requiredSnippets = [
   "SUPABASE_ANON_KEY",
   "SUPABASE_GALLERY_BUCKET",
   "fetchApprovedGalleryItems",
+  "mergeGalleryItems",
+  "EDIT_MODE",
+  "renderEditControls",
+  "data-edit-only",
+  "approved"
+];
+
+const forbiddenSnippets = [
   "submitGalleryItemToSupabase",
   "uploadGalleryImageToSupabase",
-  "mergeGalleryItems",
-  "status = 'pending'",
-  "approved"
+  "create policy \"Public can submit pending gallery items\"",
+  "create policy \"Public can upload pending gallery images\""
+];
+
+const adminRequiredSnippets = [
+  "supabase.createClient",
+  "signInWithPassword",
+  "uploadAdminImage",
+  "gallery-images",
+  "gallery_items",
+  "status: \"approved\"",
+  "adminUploadForm"
 ];
 
 for (const file of files) {
@@ -43,6 +61,37 @@ for (const file of files) {
     if (!html.includes(snippet)) {
       throw new Error(`${file}: missing ${snippet}`);
     }
+  }
+
+  for (const snippet of forbiddenSnippets.slice(0, 2)) {
+    if (html.includes(snippet)) {
+      throw new Error(`${file}: forbidden public upload code ${snippet}`);
+    }
+  }
+}
+
+const sql = fs.readFileSync("supabase-setup.sql", "utf8");
+for (const snippet of forbiddenSnippets.slice(2)) {
+  if (sql.includes(snippet)) {
+    throw new Error(`supabase-setup.sql: forbidden public upload policy ${snippet}`);
+  }
+}
+
+for (const snippet of [
+  "to authenticated",
+  "Admin can insert gallery items",
+  "Admin can upload gallery images",
+  "status = 'approved'"
+]) {
+  if (!sql.includes(snippet)) {
+    throw new Error(`supabase-setup.sql: missing ${snippet}`);
+  }
+}
+
+const admin = fs.readFileSync(adminFile, "utf8");
+for (const snippet of adminRequiredSnippets) {
+  if (!admin.includes(snippet)) {
+    throw new Error(`${adminFile}: missing ${snippet}`);
   }
 }
 

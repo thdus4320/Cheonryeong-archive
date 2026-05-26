@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>천령 갤러리 관리자</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --ink: #271d27;
+      --muted: #746b75;
+      --line: #ddd9e1;
+      --paper: #fbfaf8;
+      --panel: #ffffff;
+      --mist: #eef4f3;
+      --plum: #a84770;
+      --night: #312d3a;
+      --danger: #9b303f;
+      --radius: 8px;
+      font-family: "Pretendard", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #eef4f3, #fbfaf8 42%, #f7edf2);
+      color: var(--ink);
+    }
+
+    button, input, textarea {
+      font: inherit;
+    }
+
+    .page {
+      width: min(980px, 100%);
+      margin: 0 auto;
+      padding: 28px 18px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      letter-spacing: 0;
+    }
+
+    p {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .panel {
+      background: rgba(255,255,255,.9);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: 0 16px 44px rgba(49,45,58,.1);
+      margin-bottom: 14px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      color: var(--muted);
+      font-size: .92rem;
+      font-weight: 700;
+    }
+
+    input, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      color: var(--ink);
+      padding: 10px 11px;
+      outline: none;
+    }
+
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+      line-height: 1.65;
+    }
+
+    input:focus, textarea:focus {
+      border-color: var(--plum);
+      box-shadow: 0 0 0 3px rgba(168,71,112,.14);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .btn {
+      min-height: 38px;
+      border: 0;
+      border-radius: var(--radius);
+      padding: 0 14px;
+      background: var(--night);
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .btn.secondary {
+      background: #fff;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+
+    .btn.danger {
+      background: var(--danger);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .status {
+      min-height: 24px;
+      color: var(--plum);
+      font-weight: 700;
+    }
+
+    .preview {
+      max-height: 380px;
+      width: 100%;
+      object-fit: contain;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--mist);
+      margin-top: 12px;
+    }
+
+    @media (max-width: 720px) {
+      header, .grid {
+        grid-template-columns: 1fr;
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <div>
+        <h1>천령 갤러리 관리자</h1>
+        <p>관리자 계정으로 로그인한 뒤 이미지를 올리면 공개 갤러리에 바로 표시됩니다.</p>
+      </div>
+      <a class="btn secondary" href="./index.html">공개 페이지</a>
+    </header>
+
+    <section class="panel" id="loginPanel">
+      <h2>로그인</h2>
+      <div class="grid">
+        <label>이메일
+          <input id="email" type="email" autocomplete="email">
+        </label>
+        <label>비밀번호
+          <input id="password" type="password" autocomplete="current-password">
+        </label>
+      </div>
+      <div class="actions">
+        <button class="btn" id="loginBtn" type="button">로그인</button>
+      </div>
+    </section>
+
+    <section class="panel hidden" id="adminPanel">
+      <h2>이미지 업로드</h2>
+      <form id="adminUploadForm">
+        <div class="grid">
+          <label>제목
+            <input name="title" required placeholder="예: 온천가의 천령">
+          </label>
+          <label>분류
+            <input name="type" placeholder="예: 일러스트">
+          </label>
+        </div>
+        <label>설명
+          <textarea name="content" placeholder="이미지 설명이나 출처 메모"></textarea>
+        </label>
+        <label>이미지 파일
+          <input id="imageFile" name="imageFile" type="file" accept="image/*" required>
+        </label>
+        <label>
+          <span>
+            <input name="pinned" type="checkbox">
+            상단 고정
+          </span>
+        </label>
+        <img class="preview hidden" id="preview" alt="업로드 미리보기">
+        <div class="actions">
+          <button class="btn secondary" id="logoutBtn" type="button">로그아웃</button>
+          <button class="btn" type="submit">업로드</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="status" id="status"></div>
+      <p>Supabase에서 이메일/비밀번호 계정을 하나 만든 뒤 사용하세요. 공개 페이지 방문자는 이 관리자 화면에 로그인할 수 없으면 업로드할 수 없습니다.</p>
+    </section>
+  </main>
+
+  <script>
+    const SUPABASE_URL = "https://jsrhdqfflztpzibdjibr.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_kkjg9s5I2--I_yATsgOftg_axBRZ3rI";
+    const SUPABASE_GALLERY_BUCKET = "gallery-images";
+    const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const loginPanel = document.querySelector("#loginPanel");
+    const adminPanel = document.querySelector("#adminPanel");
+    const statusEl = document.querySelector("#status");
+    const form = document.querySelector("#adminUploadForm");
+    const fileInput = document.querySelector("#imageFile");
+    const preview = document.querySelector("#preview");
+
+    function setStatus(message) {
+      statusEl.textContent = message;
+    }
+
+    function setSignedIn(isSignedIn) {
+      loginPanel.classList.toggle("hidden", isSignedIn);
+      adminPanel.classList.toggle("hidden", !isSignedIn);
+    }
+
+    function publicImageUrl(path) {
+      return `${SUPABASE_URL}/storage/v1/object/public/${SUPABASE_GALLERY_BUCKET}/${encodeURI(path)}`;
+    }
+
+    async function refreshSession() {
+      const { data } = await client.auth.getSession();
+      setSignedIn(Boolean(data.session));
+      setStatus(data.session ? "로그인되었습니다." : "로그인이 필요합니다.");
+    }
+
+    async function uploadAdminImage(file) {
+      const extension = file.name.includes(".") ? file.name.split(".").pop().toLowerCase() : "png";
+      const safeExtension = extension.replace(/[^a-z0-9]/g, "") || "png";
+      const imagePath = `approved/${crypto.randomUUID()}.${safeExtension}`;
+      const { error } = await client.storage
+        .from(SUPABASE_GALLERY_BUCKET)
+        .upload(imagePath, file, {
+          contentType: file.type || "application/octet-stream",
+          upsert: false
+        });
+
+      if (error) throw error;
+      return {
+        imagePath,
+        imageUrl: publicImageUrl(imagePath)
+      };
+    }
+
+    document.querySelector("#loginBtn").addEventListener("click", async () => {
+      setStatus("로그인 중입니다...");
+      const email = document.querySelector("#email").value.trim();
+      const password = document.querySelector("#password").value;
+      const { error } = await client.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        setStatus(`로그인 실패: ${error.message}`);
+        return;
+      }
+
+      await refreshSession();
+    });
+
+    document.querySelector("#logoutBtn").addEventListener("click", async () => {
+      await client.auth.signOut();
+      await refreshSession();
+    });
+
+    fileInput.addEventListener("change", () => {
+      const file = fileInput.files?.[0];
+      if (!file) return;
+      preview.src = URL.createObjectURL(file);
+      preview.classList.remove("hidden");
+    });
+
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+      const file = fileInput.files?.[0];
+      if (!file) {
+        setStatus("이미지 파일을 선택해주세요.");
+        return;
+      }
+
+      setStatus("업로드 중입니다...");
+      const data = new FormData(form);
+
+      try {
+        const uploaded = await uploadAdminImage(file);
+        const { error } = await client.from("gallery_items").insert({
+          title: data.get("title")?.toString().trim() || "제목 없음",
+          type: data.get("type")?.toString().trim() || "이미지",
+          content: data.get("content")?.toString().trim() || "",
+          image_path: uploaded.imagePath,
+          image_url: uploaded.imageUrl,
+          pinned: Boolean(data.get("pinned")),
+          status: "approved"
+        });
+
+        if (error) throw error;
+        form.reset();
+        preview.classList.add("hidden");
+        setStatus("업로드되었습니다. 공개 페이지 새로고침 후 확인할 수 있습니다.");
+      } catch (error) {
+        setStatus(`업로드 실패: ${error.message}`);
+      }
+    });
+
+    refreshSession();
+  </script>
+</body>
+</html>
