@@ -12,16 +12,21 @@ const requiredSnippets = [
   "pinned: Boolean",
   "pinnedGalleryItems",
   "data-pin",
-  "상단 고정",
-  "대표 이미지 주소",
-  "대표 이미지 파일",
   "id=\"imageViewerDialog\"",
   "openImageViewer",
   "closeImageViewer",
   "data-view",
   "gallery-image-button",
   "viewerImage",
-  "이미지 크게 보기"
+  "SUPABASE_URL",
+  "SUPABASE_ANON_KEY",
+  "SUPABASE_GALLERY_BUCKET",
+  "fetchApprovedGalleryItems",
+  "submitGalleryItemToSupabase",
+  "uploadGalleryImageToSupabase",
+  "mergeGalleryItems",
+  "status = 'pending'",
+  "approved"
 ];
 
 for (const file of files) {

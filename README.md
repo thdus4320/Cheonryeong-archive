@@ -8,6 +8,7 @@
 - `cheonryeong-archive.html`: 로컬에서 처음 만든 원본 이름의 동일 앱
 - `assets/cheonryeong-reference.png`: 기본 캐릭터 시트 이미지
 - `.nojekyll`: GitHub Pages가 정적 파일을 그대로 제공하게 하는 설정
+- `supabase-setup.sql`: 공개 갤러리 업로드용 Supabase 테이블/RLS 설정
 
 ## 로컬에서 열기
 
@@ -18,6 +19,14 @@
 사이트에서 수정한 프로필, 등록한 항목, 업로드한 이미지는 브라우저의 `localStorage`에 저장됩니다.
 
 다른 사람에게 같은 수정 내용을 전달하려면 사이트 상단의 `내보내기`로 JSON을 저장한 뒤, 상대가 `가져오기`로 불러오면 됩니다.
+
+## 공개 갤러리 업로드
+
+사이트는 Supabase의 `gallery_items` 테이블과 `gallery-images` Storage bucket을 사용해 방문자 이미지 제출을 받을 수 있습니다.
+
+방문자가 등록한 이미지는 `pending` 상태로 저장되고, 관리자가 Supabase Table Editor에서 `status`를 `approved`로 바꾸면 공개 갤러리에 표시됩니다.
+
+Supabase SQL Editor에서 `supabase-setup.sql` 내용을 실행하고, Storage에서 `gallery-images` bucket을 Public으로 생성해야 합니다.
 
 ## GitHub Pages 배포
 

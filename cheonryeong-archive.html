@@ -823,6 +823,10 @@
   <script>
     const STORAGE_KEY = "cheonryeong.archive.v1";
     const REFERENCE_IMAGE = "assets/cheonryeong-reference.png";
+    const SUPABASE_URL = "https://jsrhdqfflztpzibdjibr.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_kkjg9s5I2--I_yATsgOftg_axBRZ3rI";
+    const SUPABASE_GALLERY_BUCKET = "gallery-images";
+    // Public submissions use status = 'pending' until the owner approves them in Supabase.
 
     const defaultState = {
       profile: {
@@ -957,6 +961,7 @@
     let state = loadState();
     let activeTab = "profile";
     let pendingSubmit = null;
+    let supabaseGalleryItems = [];
 
     const nav = document.querySelector("#nav");
     const dialog = document.querySelector("#editorDialog");
@@ -999,6 +1004,117 @@
       toast.textContent = message;
       toast.classList.add("show");
       setTimeout(() => toast.classList.remove("show"), 1800);
+    }
+
+    function supabaseHeaders(extra = {}) {
+      return {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        ...extra
+      };
+    }
+
+    function supabasePublicImageUrl(path) {
+      return `${SUPABASE_URL}/storage/v1/object/public/${SUPABASE_GALLERY_BUCKET}/${encodeURI(path)}`;
+    }
+
+    function mapSupabaseGalleryItem(item) {
+      return {
+        id: item.id,
+        title: item.title || "제목 없음",
+        type: item.type || "이미지",
+        content: item.content || "",
+        src: item.image_url,
+        pinned: Boolean(item.pinned),
+        status: item.status || "approved",
+        remote: true
+      };
+    }
+
+    function mergeGalleryItems() {
+      const merged = [...(state.gallery ?? [])];
+      const localIds = new Set(merged.map(item => item.id));
+
+      supabaseGalleryItems.forEach(item => {
+        if (!localIds.has(item.id)) merged.push(item);
+      });
+
+      return merged;
+    }
+
+    async function fetchApprovedGalleryItems() {
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/gallery_items?select=id,title,type,content,image_url,pinned,status,created_at&status=eq.approved&order=pinned.desc,created_at.desc`, {
+          headers: supabaseHeaders({ Accept: "application/json" })
+        });
+
+        if (!response.ok) throw new Error(await response.text());
+        const items = await response.json();
+        supabaseGalleryItems = items.map(mapSupabaseGalleryItem);
+        render();
+      } catch (error) {
+        console.warn("Supabase gallery load failed", error);
+        showToast("공개 갤러리를 불러오지 못했습니다. 로컬 자료만 표시합니다.");
+      }
+    }
+
+    async function uploadGalleryImageToSupabase(file) {
+      const extension = file.name.includes(".") ? file.name.split(".").pop().toLowerCase() : "png";
+      const safeName = `${crypto.randomUUID()}.${extension.replace(/[^a-z0-9]/g, "") || "png"}`;
+      const imagePath = `pending/${safeName}`;
+      const response = await fetch(`${SUPABASE_URL}/storage/v1/object/${SUPABASE_GALLERY_BUCKET}/${imagePath}`, {
+        method: "POST",
+        headers: supabaseHeaders({
+          "Content-Type": file.type || "application/octet-stream",
+          "x-upsert": "false"
+        }),
+        body: file
+      });
+
+      if (!response.ok) throw new Error(await response.text());
+      return {
+        imagePath,
+        imageUrl: supabasePublicImageUrl(imagePath)
+      };
+    }
+
+    async function submitGalleryItemToSupabase(item, file) {
+      let imagePath = "external";
+      let imageUrl = item.src || REFERENCE_IMAGE;
+
+      if (file) {
+        const uploaded = await uploadGalleryImageToSupabase(file);
+        imagePath = uploaded.imagePath;
+        imageUrl = uploaded.imageUrl;
+      }
+
+      const row = {
+        title: item.title,
+        type: item.type,
+        content: item.content,
+        image_path: imagePath,
+        image_url: imageUrl,
+        pinned: Boolean(item.pinned),
+        status: "pending"
+      };
+
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/gallery_items`, {
+        method: "POST",
+        headers: supabaseHeaders({
+          "Content-Type": "application/json",
+          Prefer: "return=representation"
+        }),
+        body: JSON.stringify(row)
+      });
+
+      if (!response.ok) throw new Error(await response.text());
+      const [created] = await response.json();
+      return {
+        ...item,
+        id: created.id,
+        src: imageUrl,
+        status: "pending"
+      };
     }
 
     function escapeHtml(value) {
@@ -1146,7 +1262,7 @@
     }
 
     function pinnedGalleryItems() {
-      return [...(state.gallery ?? [])].sort((a, b) => Number(Boolean(b.pinned)) - Number(Boolean(a.pinned)));
+      return mergeGalleryItems().sort((a, b) => Number(Boolean(b.pinned)) - Number(Boolean(a.pinned)));
     }
 
     function renderItemCard(collectionKey, item) {
@@ -1157,7 +1273,7 @@
               <img src="${escapeHtml(item.src || REFERENCE_IMAGE)}" alt="${escapeHtml(item.title)}">
             </button>
             <div class="body">
-              <div class="card-meta">${escapeHtml(item.type || "이미지")}</div>
+              <div class="card-meta">${escapeHtml(item.status === "pending" ? `${item.type || "이미지"} · 승인 대기` : item.type || "이미지")}</div>
               <h3>${escapeHtml(item.title)}</h3>
               <p>${escapeHtml(item.content)}</p>
               ${galleryActions(item)}
@@ -1186,6 +1302,14 @@
     }
 
     function galleryActions(item) {
+      if (item.remote) {
+        return `
+          <div class="card-actions">
+            <button class="mini-btn" type="button" data-view="${item.id}">크게 보기</button>
+          </div>
+        `;
+      }
+
       return `
         <div class="card-actions">
           <button class="mini-btn" type="button" data-pin="${item.id}">${item.pinned ? "고정 해제" : "상단 고정"}</button>
@@ -1201,7 +1325,7 @@
     }
 
     function openImageViewer(id) {
-      const item = state.gallery.find(entry => entry.id === id);
+      const item = mergeGalleryItems().find(entry => entry.id === id);
       if (!item) return;
 
       document.querySelector("#viewerImage").src = item.src || REFERENCE_IMAGE;
@@ -1292,8 +1416,22 @@
         if (collectionKey === "gallery") {
           next.src = data.get("src")?.toString().trim() || item?.src || REFERENCE_IMAGE;
           next.pinned = Boolean(data.get("pinned"));
-          if (imageFile?.files?.[0]) {
-            next.src = await readFileAsDataUrl(imageFile.files[0]);
+          const selectedImage = imageFile?.files?.[0];
+
+          if (!item) {
+            try {
+              const submitted = await submitGalleryItemToSupabase(next, selectedImage);
+              state.gallery = [submitted, ...state.gallery];
+              saveState("이미지를 등록했습니다. 공개 갤러리에는 관리자 승인 후 표시됩니다.");
+              return;
+            } catch (error) {
+              console.warn("Supabase gallery submit failed", error);
+              showToast("공개 등록에 실패해 로컬에만 저장합니다.");
+            }
+          }
+
+          if (selectedImage) {
+            next.src = await readFileAsDataUrl(selectedImage);
           }
         }
 
@@ -1406,6 +1544,7 @@
     });
 
     render();
+    fetchApprovedGalleryItems();
   </script>
 </body>
 </html>
