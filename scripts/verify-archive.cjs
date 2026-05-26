@@ -44,7 +44,15 @@ const adminRequiredSnippets = [
   "gallery-images",
   "gallery_items",
   "status: \"approved\"",
-  "adminUploadForm"
+  "adminUploadForm",
+  "adminGalleryList",
+  "fetchAdminGalleryItems",
+  "renderAdminGalleryItems",
+  "startEditItem",
+  "deleteAdminItem",
+  "currentEditId",
+  "저장",
+  "삭제"
 ];
 
 for (const file of files) {
@@ -80,6 +88,7 @@ for (const snippet of forbiddenSnippets.slice(2)) {
 for (const snippet of [
   "to authenticated",
   "Admin can insert gallery items",
+  "Admin can read gallery items",
   "Admin can upload gallery images",
   "status = 'approved'"
 ]) {

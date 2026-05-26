@@ -25,7 +25,7 @@
 
 사이트는 Supabase의 `gallery_items` 테이블과 `gallery-images` Storage bucket을 사용해 공개 갤러리를 불러옵니다.
 
-방문자는 공개 페이지에서 보기만 할 수 있습니다. 이미지는 `admin.html`에서 관리자 계정으로 로그인한 뒤 업로드합니다.
+방문자는 공개 페이지에서 보기만 할 수 있습니다. 이미지는 `admin.html`에서 관리자 계정으로 로그인한 뒤 업로드, 수정, 삭제합니다.
 
 Supabase SQL Editor에서 `supabase-setup.sql` 내용을 실행하고, Storage에서 `gallery-images` bucket을 Public으로 생성해야 합니다. Auth에는 관리자 이메일/비밀번호 사용자를 하나 만들어두세요.
 

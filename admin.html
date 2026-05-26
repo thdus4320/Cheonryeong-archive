@@ -150,6 +150,44 @@
       margin-top: 12px;
     }
 
+    .list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .item {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .item img {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
+      background: var(--mist);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .item-body {
+      padding: 12px;
+    }
+
+    .item-body h3 {
+      margin: 0 0 6px;
+      font-size: 1rem;
+      letter-spacing: 0;
+    }
+
+    .item-body p {
+      margin: 0;
+      white-space: pre-line;
+      word-break: keep-all;
+    }
+
     @media (max-width: 720px) {
       header, .grid {
         grid-template-columns: 1fr;
@@ -185,7 +223,7 @@
     </section>
 
     <section class="panel hidden" id="adminPanel">
-      <h2>이미지 업로드</h2>
+      <h2 id="formTitle">이미지 업로드</h2>
       <form id="adminUploadForm">
         <div class="grid">
           <label>제목
@@ -199,7 +237,7 @@
           <textarea name="content" placeholder="이미지 설명이나 출처 메모"></textarea>
         </label>
         <label>이미지 파일
-          <input id="imageFile" name="imageFile" type="file" accept="image/*" required>
+          <input id="imageFile" name="imageFile" type="file" accept="image/*">
         </label>
         <label>
           <span>
@@ -209,10 +247,19 @@
         </label>
         <img class="preview hidden" id="preview" alt="업로드 미리보기">
         <div class="actions">
+          <button class="btn secondary hidden" id="cancelEditBtn" type="button">수정 취소</button>
           <button class="btn secondary" id="logoutBtn" type="button">로그아웃</button>
-          <button class="btn" type="submit">업로드</button>
+          <button class="btn" id="submitBtn" type="submit">저장</button>
         </div>
       </form>
+    </section>
+
+    <section class="panel hidden" id="listPanel">
+      <h2>등록된 이미지</h2>
+      <div class="actions">
+        <button class="btn secondary" id="refreshListBtn" type="button">새로고침</button>
+      </div>
+      <div class="list" id="adminGalleryList"></div>
     </section>
 
     <section class="panel">
@@ -233,6 +280,13 @@
     const form = document.querySelector("#adminUploadForm");
     const fileInput = document.querySelector("#imageFile");
     const preview = document.querySelector("#preview");
+    const listPanel = document.querySelector("#listPanel");
+    const adminGalleryList = document.querySelector("#adminGalleryList");
+    const formTitle = document.querySelector("#formTitle");
+    const submitBtn = document.querySelector("#submitBtn");
+    const cancelEditBtn = document.querySelector("#cancelEditBtn");
+    let adminGalleryItems = [];
+    let currentEditId = null;
 
     function setStatus(message) {
       statusEl.textContent = message;
@@ -241,6 +295,7 @@
     function setSignedIn(isSignedIn) {
       loginPanel.classList.toggle("hidden", isSignedIn);
       adminPanel.classList.toggle("hidden", !isSignedIn);
+      listPanel.classList.toggle("hidden", !isSignedIn);
     }
 
     function publicImageUrl(path) {
@@ -251,6 +306,113 @@
       const { data } = await client.auth.getSession();
       setSignedIn(Boolean(data.session));
       setStatus(data.session ? "로그인되었습니다." : "로그인이 필요합니다.");
+      if (data.session) await fetchAdminGalleryItems();
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      }[char]));
+    }
+
+    async function fetchAdminGalleryItems() {
+      const { data, error } = await client
+        .from("gallery_items")
+        .select("id,title,type,content,image_path,image_url,pinned,status,created_at")
+        .order("pinned", { ascending: false })
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        setStatus(`목록 불러오기 실패: ${error.message}`);
+        return;
+      }
+
+      adminGalleryItems = data ?? [];
+      renderAdminGalleryItems();
+    }
+
+    function renderAdminGalleryItems() {
+      if (!adminGalleryItems.length) {
+        adminGalleryList.innerHTML = "<p>등록된 이미지가 없습니다.</p>";
+        return;
+      }
+
+      adminGalleryList.innerHTML = adminGalleryItems.map(item => `
+        <article class="item">
+          <img src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.title)}">
+          <div class="item-body">
+            <h3>${escapeHtml(item.title)}</h3>
+            <p>${escapeHtml(item.type || "이미지")}${item.pinned ? " · 상단 고정" : ""}</p>
+            <p>${escapeHtml(item.content || "")}</p>
+            <div class="actions">
+              <button class="btn secondary" type="button" data-edit="${item.id}">수정</button>
+              <button class="btn danger" type="button" data-delete="${item.id}">삭제</button>
+            </div>
+          </div>
+        </article>
+      `).join("");
+
+      adminGalleryList.querySelectorAll("[data-edit]").forEach(button => {
+        button.addEventListener("click", () => startEditItem(button.dataset.edit));
+      });
+
+      adminGalleryList.querySelectorAll("[data-delete]").forEach(button => {
+        button.addEventListener("click", () => deleteAdminItem(button.dataset.delete));
+      });
+    }
+
+    function resetFormMode() {
+      currentEditId = null;
+      form.reset();
+      preview.classList.add("hidden");
+      preview.removeAttribute("src");
+      formTitle.textContent = "이미지 업로드";
+      submitBtn.textContent = "저장";
+      cancelEditBtn.classList.add("hidden");
+      fileInput.required = true;
+    }
+
+    function startEditItem(id) {
+      const item = adminGalleryItems.find(entry => entry.id === id);
+      if (!item) return;
+
+      currentEditId = id;
+      form.elements.title.value = item.title || "";
+      form.elements.type.value = item.type || "";
+      form.elements.content.value = item.content || "";
+      form.elements.pinned.checked = Boolean(item.pinned);
+      fileInput.required = false;
+      preview.src = item.image_url;
+      preview.classList.remove("hidden");
+      formTitle.textContent = "이미지 수정";
+      submitBtn.textContent = "수정 저장";
+      cancelEditBtn.classList.remove("hidden");
+      adminPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    async function deleteAdminItem(id) {
+      const item = adminGalleryItems.find(entry => entry.id === id);
+      if (!item) return;
+      if (!confirm(`'${item.title}' 이미지를 삭제할까요?`)) return;
+
+      setStatus("삭제 중입니다...");
+      const { error: rowError } = await client.from("gallery_items").delete().eq("id", id);
+      if (rowError) {
+        setStatus(`삭제 실패: ${rowError.message}`);
+        return;
+      }
+
+      if (item.image_path) {
+        await client.storage.from(SUPABASE_GALLERY_BUCKET).remove([item.image_path]);
+      }
+
+      if (currentEditId === id) resetFormMode();
+      setStatus("삭제되었습니다.");
+      await fetchAdminGalleryItems();
     }
 
     async function uploadAdminImage(file) {
@@ -287,8 +449,12 @@
 
     document.querySelector("#logoutBtn").addEventListener("click", async () => {
       await client.auth.signOut();
+      resetFormMode();
       await refreshSession();
     });
+
+    document.querySelector("#refreshListBtn").addEventListener("click", fetchAdminGalleryItems);
+    cancelEditBtn.addEventListener("click", resetFormMode);
 
     fileInput.addEventListener("change", () => {
       const file = fileInput.files?.[0];
@@ -300,32 +466,47 @@
     form.addEventListener("submit", async event => {
       event.preventDefault();
       const file = fileInput.files?.[0];
-      if (!file) {
+      if (!file && !currentEditId) {
         setStatus("이미지 파일을 선택해주세요.");
         return;
       }
 
-      setStatus("업로드 중입니다...");
+      setStatus(currentEditId ? "수정 중입니다..." : "업로드 중입니다...");
       const data = new FormData(form);
+      const wasEditing = Boolean(currentEditId);
 
       try {
-        const uploaded = await uploadAdminImage(file);
-        const { error } = await client.from("gallery_items").insert({
+        const payload = {
           title: data.get("title")?.toString().trim() || "제목 없음",
           type: data.get("type")?.toString().trim() || "이미지",
           content: data.get("content")?.toString().trim() || "",
-          image_path: uploaded.imagePath,
-          image_url: uploaded.imageUrl,
           pinned: Boolean(data.get("pinned")),
           status: "approved"
-        });
+        };
+
+        let oldImagePath = null;
+        if (file) {
+          const uploaded = await uploadAdminImage(file);
+          payload.image_path = uploaded.imagePath;
+          payload.image_url = uploaded.imageUrl;
+          oldImagePath = adminGalleryItems.find(item => item.id === currentEditId)?.image_path;
+        }
+
+        const request = currentEditId
+          ? client.from("gallery_items").update(payload).eq("id", currentEditId)
+          : client.from("gallery_items").insert(payload);
+
+        const { error } = await request;
 
         if (error) throw error;
-        form.reset();
-        preview.classList.add("hidden");
-        setStatus("업로드되었습니다. 공개 페이지 새로고침 후 확인할 수 있습니다.");
+        if (oldImagePath) {
+          await client.storage.from(SUPABASE_GALLERY_BUCKET).remove([oldImagePath]);
+        }
+        resetFormMode();
+        await fetchAdminGalleryItems();
+        setStatus(wasEditing ? "수정되었습니다." : "업로드되었습니다. 공개 페이지 새로고침 후 확인할 수 있습니다.");
       } catch (error) {
-        setStatus(`업로드 실패: ${error.message}`);
+        setStatus(`${wasEditing ? "수정" : "업로드"} 실패: ${error.message}`);
       }
     });
 

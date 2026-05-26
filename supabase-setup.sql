@@ -19,6 +19,13 @@ for select
 to anon
 using (status = 'approved');
 
+drop policy if exists "Admin can read gallery items" on public.gallery_items;
+create policy "Admin can read gallery items"
+on public.gallery_items
+for select
+to authenticated
+using (true);
+
 drop policy if exists "Public can submit pending gallery items" on public.gallery_items;
 drop policy if exists "Public can upload pending gallery images" on storage.objects;
 
