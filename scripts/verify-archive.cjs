@@ -24,6 +24,8 @@ const requiredSnippets = [
   "SUPABASE_GALLERY_BUCKET",
   "fetchApprovedGalleryItems",
   "mergeGalleryItems",
+  "return EDIT_MODE ?",
+  "supabaseGalleryItems",
   "EDIT_MODE",
   "renderEditControls",
   "data-edit-only",
@@ -51,8 +53,8 @@ const adminRequiredSnippets = [
   "startEditItem",
   "deleteAdminItem",
   "currentEditId",
-  "저장",
-  "삭제"
+  "update(payload)",
+  "delete().eq"
 ];
 
 for (const file of files) {

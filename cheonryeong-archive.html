@@ -1039,7 +1039,7 @@
         if (!localIds.has(item.id)) merged.push(item);
       });
 
-      return merged;
+      return EDIT_MODE ? merged : supabaseGalleryItems;
     }
 
     async function fetchApprovedGalleryItems() {
